@@ -14,37 +14,37 @@ export default function Dashboard({ organizations, recentProjects, recentTasks }
                     </p>
                 </div>
 
-                {/* Stats */
+                {/* Stats */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="card">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <div className="text-sm font-medium text-gray-500 truncate">
                             Organizations
-                        </dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                        </div>
+                        <div className="mt-1 text-3xl font-semibold text-gray-900">
                             {organizations?.length || 0}
-                        </dd>
+                        </div>
                     </div>
                     <div className="card">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <div className="text-sm font-medium text-gray-500 truncate">
                             Active Projects
-                        </dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                        </div>
+                        <div className="mt-1 text-3xl font-semibold text-gray-900">
                             {recentProjects?.length || 0}
-                        </dd>
+                        </div>
                     </div>
                     <div className="card">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <div className="text-sm font-medium text-gray-500 truncate">
                             My Tasks
-                        </dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                        </div>
+                        <div className="mt-1 text-3xl font-semibold text-gray-900">
                             {recentTasks?.length || 0}
-                        </dd>
+                        </div>
                     </div>
                     <div className="card">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <div className="text-sm font-medium text-gray-500 truncate">
                             Completed
-                        </dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                        </div>
+                        <div className="mt-1 text-3xl font-semibold text-gray-900">0</div>
                     </div>
                 </div>
 
