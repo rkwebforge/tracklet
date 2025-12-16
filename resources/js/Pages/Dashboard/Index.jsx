@@ -14,7 +14,7 @@ export default function Dashboard({ organizations, recentProjects, recentTasks }
                     </p>
                 </div>
 
-                {/* Stats */}
+                {/* Stats */
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="card">
                         <dt className="text-sm font-medium text-gray-500 truncate">
