@@ -76,7 +76,7 @@ export default function Welcome() {
                                 {features.map((feature, index) => (
                                     <div
                                         key={index}
-                                        className={`group relative p-6 rounded-xl bg-gradient-to-br  transform transition-all duration-300 hover:scale-105 cursor-pointer ${
+                                        className={`group relative p-6 rounded-xl  transform transition-all duration-300 hover:scale-105 cursor-pointer ${
                                             activeFeature === index ? 'ring-4 ring-primary-400' : ''
                                         }`}
                                     >
