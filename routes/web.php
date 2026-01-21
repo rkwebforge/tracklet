@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\OrganizationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,8 +20,18 @@ Route::get('/', function () {
 // Authentication Routes are handled by Laravel Fortify
 // See app/Providers/FortifyServiceProvider.php
 
+// Invitation preview (guest can view)
+Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
+
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
+    // Organization Setup (for new users)
+    Route::get('/setup', [OrganizationController::class, 'setup'])->name('setup');
+    Route::post('/setup', [OrganizationController::class, 'store'])->name('setup.store');
+
+    // Accept invitation (for logged-in users)
+    Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept'])->name('invitations.accept');
+
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -28,15 +40,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Organization\OrganizationController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Organization\OrganizationController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Organization\OrganizationController::class, 'store'])->name('store');
-        Route::get('/{organization}', [\App\Http\Controllers\Organization\OrganizationController::class, 'show'])->name('show');
-        Route::get('/{organization}/edit', [\App\Http\Controllers\Organization\OrganizationController::class, 'edit'])->name('edit');
-        Route::put('/{organization}', [\App\Http\Controllers\Organization\OrganizationController::class, 'update'])->name('update');
-        Route::delete('/{organization}', [\App\Http\Controllers\Organization\OrganizationController::class, 'destroy'])->name('destroy');
+        Route::get('/{organization}', [OrganizationController::class, 'show'])->name('show');
+        Route::get('/{organization}/edit', [OrganizationController::class, 'edit'])->name('edit');
+        Route::put('/{organization}', [OrganizationController::class, 'update'])->name('update');
+        Route::delete('/{organization}', [OrganizationController::class, 'destroy'])->name('destroy');
         
         // Members
         Route::get('/{organization}/members', [\App\Http\Controllers\Organization\MemberController::class, 'index'])->name('members.index');
         Route::post('/{organization}/members', [\App\Http\Controllers\Organization\MemberController::class, 'store'])->name('members.store');
+        Route::put('/{organization}/members/{user}', [\App\Http\Controllers\Organization\MemberController::class, 'update'])->name('members.update');
         Route::delete('/{organization}/members/{user}', [\App\Http\Controllers\Organization\MemberController::class, 'destroy'])->name('members.destroy');
+        
+        // Invitations
+        Route::get('/{organization}/invitations', [InvitationController::class, 'index'])->name('invitations.index');
+        Route::post('/{organization}/invitations', [InvitationController::class, 'create'])->name('invitations.create');
+        Route::delete('/{organization}/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitations.destroy');
     });
 
     // Projects

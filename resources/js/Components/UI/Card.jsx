@@ -1,9 +1,12 @@
-import clsx from 'clsx';
+import clsx from "clsx";
+import { memo } from "react";
 
-export default function Card({ children, className = '', ...props }) {
-    return (
-        <div className={clsx('card', className)} {...props}>
-            {children}
-        </div>
-    );
-}
+const Card = memo(function Card({ children, className = "", ...props }) {
+  return (
+    <div className={clsx("card", className)} {...props}>
+      {children}
+    </div>
+  );
+});
+
+export default Card;

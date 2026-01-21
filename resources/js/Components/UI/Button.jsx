@@ -1,33 +1,36 @@
-import clsx from 'clsx';
+import clsx from "clsx";
+import { memo } from "react";
 
-export default function Button({ 
-    children, 
-    type = 'button', 
-    variant = 'primary', 
-    disabled = false,
-    className = '',
-    ...props 
+const Button = memo(function Button({
+  children,
+  type = "button",
+  variant = "primary",
+  disabled = false,
+  className = "",
+  ...props
 }) {
-    const baseClasses = 'btn';
-    const variantClasses = {
-        primary: 'btn-primary',
-        secondary: 'btn-secondary',
-        danger: 'btn-danger',
-    };
+  const baseClasses = "btn";
+  const variantClasses = {
+    primary: "btn-primary",
+    secondary: "btn-secondary",
+    danger: "btn-danger",
+  };
 
-    return (
-        <button
-            type={type}
-            disabled={disabled}
-            className={clsx(
-                baseClasses,
-                variantClasses[variant],
-                disabled && 'opacity-50 cursor-not-allowed',
-                className
-            )}
-            {...props}
-        >
-            {children}
-        </button>
-    );
-}
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      className={clsx(
+        baseClasses,
+        variantClasses[variant],
+        disabled && "opacity-50 cursor-not-allowed",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+});
+
+export default Button;

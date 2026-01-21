@@ -38,7 +38,7 @@ php artisan key:generate
 
 **Edit `.env` file:**
 ```env
-DB_DATABASE=mini_jira
+DB_DATABASE=tracklet
 DB_USERNAME=your_username
 DB_PASSWORD=your_password
 ```
