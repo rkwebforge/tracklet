@@ -124,7 +124,10 @@ export default function ProjectShow({ project, board, users = [], can = {} }) {
                                                 className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
                                             >
                                                 <div className="flex items-start gap-2 mb-2">
-                                                    <span className="text-lg">{getTypeIcon(task.type)}</span>
+                                                    {(() => {
+                                                        const Icon = getTypeIcon(task.type);
+                                                        return <Icon className="w-5 h-5 text-gray-500" />;
+                                                    })()}
                                                     <h4 className="font-medium text-gray-900 text-sm flex-1">
                                                         {task.title}
                                                     </h4>
@@ -190,6 +193,7 @@ export default function ProjectShow({ project, board, users = [], can = {} }) {
                         project={project}
                         board={board}
                         task={selectedTask}
+                        users={users}
                     />
                 )}
             </div>

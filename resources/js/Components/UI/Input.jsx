@@ -1,14 +1,14 @@
 import clsx from "clsx";
-import { memo } from "react";
+import { forwardRef } from "react";
 
-const Input = memo(function Input({
+const Input = forwardRef(function Input({
   type = "text",
   className = "",
   error = null,
   label = null,
   id,
   ...props
-}) {
+}, ref) {
   return (
     <div>
       {label && (
@@ -17,6 +17,7 @@ const Input = memo(function Input({
         </label>
       )}
       <input
+        ref={ref}
         id={id}
         type={type}
         className={clsx(
