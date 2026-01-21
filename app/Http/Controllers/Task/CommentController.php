@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Task;
 
 use App\Http\Controllers\Controller;
 use Domain\Task\Models\Task;
-use Domain\Task\Models\Comment;
+use Domain\Task\Models\TaskComment;
+use Domain\Task\Contracts\CommentServiceInterface;
+use Domain\Task\DTOs\CreateCommentDTO;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
+    public function __construct(
+        private CommentServiceInterface $commentService
+    ) {}
+
     /**
      * Add a comment to a task.
      */
@@ -20,10 +26,8 @@ class CommentController extends Controller
             'content' => 'required|string',
         ]);
 
-        $comment = $task->comments()->create([
-            'content' => $validated['content'],
-            'user_id' => $request->user()->id,
-        ]);
+        $dto = CreateCommentDTO::fromArray($validated);
+        $this->commentService->create($task, $dto, $request->user());
 
         return back()->with('success', 'Comment added successfully.');
     }
@@ -31,11 +35,11 @@ class CommentController extends Controller
     /**
      * Delete a comment.
      */
-    public function destroy(Comment $comment)
+    public function destroy(TaskComment $comment)
     {
         $this->authorize('delete', $comment);
 
-        $comment->delete();
+        $this->commentService->delete($comment);
 
         return back()->with('success', 'Comment deleted successfully.');
     }

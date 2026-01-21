@@ -11,22 +11,35 @@ use Domain\Task\Models\Task;
 use Domain\Task\Enums\TaskType;
 use Domain\Task\Enums\TaskStatus;
 use Domain\Task\Enums\TaskPriority;
+use Domain\Task\Contracts\TaskServiceInterface;
+use Domain\Task\DTOs\CreateTaskDTO;
+use Domain\Task\DTOs\UpdateTaskDTO;
+use Domain\Task\DTOs\MoveTaskDTO;
 use Domain\Project\Models\Project;
-use Domain\Board\Models\Board;
-use App\Models\User;
 
 class TaskController extends Controller
 {
+    public function __construct(
+        private TaskServiceInterface $taskService
+    ) {}
+
     /**
      * Display the specified task.
      */
-    public function show(int $id): Response
+    public function show(Task $task): Response
     {
-        $task = Task::with(['project', 'board', 'assignee', 'reporter'])
-            ->findOrFail($id);
+        $this->authorize('view', $task);
+
+        $task = $this->taskService->getWithDetails($task);
 
         return Inertia::render('Task/Show', [
             'task' => $task,
+            'can' => [
+                'update' => auth()->user()->can('update', $task),
+                'delete' => auth()->user()->can('delete', $task),
+                'comment' => auth()->user()->can('comment', $task),
+                'assign' => auth()->user()->can('assign', $task),
+            ],
         ]);
     }
 
@@ -35,6 +48,8 @@ class TaskController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Task::class);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -46,23 +61,12 @@ class TaskController extends Controller
             'assignee_id' => 'nullable|exists:users,id',
         ]);
 
-        // Get the max position for tasks in this status
-        $maxPosition = Task::where('board_id', $validated['board_id'])
-            ->where('status', $validated['status'])
-            ->max('position') ?? -1;
+        // Verify user has access to the project
+        $project = Project::findOrFail($validated['project_id']);
+        $this->authorize('view', $project);
 
-        $task = Task::create([
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'type' => $validated['type'],
-            'priority' => $validated['priority'],
-            'status' => $validated['status'],
-            'project_id' => $validated['project_id'],
-            'board_id' => $validated['board_id'],
-            'assignee_id' => $validated['assignee_id'],
-            'reporter_id' => auth()->id(),
-            'position' => $maxPosition + 1,
-        ]);
+        $dto = CreateTaskDTO::fromArray($validated);
+        $this->taskService->create($dto, auth()->user());
 
         return redirect()->back()
             ->with('success', 'Task created successfully.');
@@ -71,9 +75,9 @@ class TaskController extends Controller
     /**
      * Update the specified task.
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, Task $task): RedirectResponse
     {
-        $task = Task::findOrFail($id);
+        $this->authorize('update', $task);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -84,7 +88,8 @@ class TaskController extends Controller
             'assignee_id' => 'nullable|exists:users,id',
         ]);
 
-        $task->update($validated);
+        $dto = UpdateTaskDTO::fromArray($validated);
+        $this->taskService->update($task, $dto);
 
         return redirect()->back()
             ->with('success', 'Task updated successfully.');
@@ -93,19 +98,17 @@ class TaskController extends Controller
     /**
      * Move task to different status/position.
      */
-    public function move(Request $request, int $id): RedirectResponse
+    public function move(Request $request, Task $task): RedirectResponse
     {
-        $task = Task::findOrFail($id);
+        $this->authorize('update', $task);
 
         $validated = $request->validate([
             'status' => 'required|in:' . implode(',', TaskStatus::values()),
             'position' => 'required|integer|min:0',
         ]);
 
-        $task->update([
-            'status' => $validated['status'],
-            'position' => $validated['position'],
-        ]);
+        $dto = MoveTaskDTO::fromArray($validated);
+        $this->taskService->move($task, $dto);
 
         return redirect()->back()
             ->with('success', 'Task moved successfully.');
@@ -114,10 +117,11 @@ class TaskController extends Controller
     /**
      * Remove the specified task.
      */
-    public function destroy(int $id): RedirectResponse
+    public function destroy(Task $task): RedirectResponse
     {
-        $task = Task::findOrFail($id);
-        $task->delete();
+        $this->authorize('delete', $task);
+
+        $this->taskService->delete($task);
 
         return redirect()->back()
             ->with('success', 'Task deleted successfully.');

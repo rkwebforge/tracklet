@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Board;
 
 use App\Http\Controllers\Controller;
 use Domain\Board\Models\Board;
+use Domain\Board\Contracts\BoardServiceInterface;
+use Domain\Board\DTOs\UpdateBoardDTO;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class BoardController extends Controller
 {
+    public function __construct(
+        private BoardServiceInterface $boardService
+    ) {}
+
     /**
      * Display the board with its tasks.
      */
@@ -16,15 +22,10 @@ class BoardController extends Controller
     {
         $this->authorize('view', $board->project);
 
-        $board->load([
-            'tasks' => function ($query) {
-                $query->with(['assignee', 'reporter'])
-                    ->orderBy('position');
-            }
-        ]);
+        $boardWithTasks = $this->boardService->getBoardWithTasks($board);
 
         return Inertia::render('Boards/Show', [
-            'board' => $board,
+            'board' => $boardWithTasks->toArray(),
             'project' => $board->project,
         ]);
     }
@@ -54,7 +55,8 @@ class BoardController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $board->update($validated);
+        $dto = UpdateBoardDTO::fromArray($validated);
+        $this->boardService->update($board, $dto);
 
         return back()->with('success', 'Board updated successfully.');
     }

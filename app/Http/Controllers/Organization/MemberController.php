@@ -4,12 +4,21 @@ namespace App\Http\Controllers\Organization;
 
 use App\Http\Controllers\Controller;
 use Domain\Organization\Models\Organization;
+use Domain\Organization\Contracts\MemberServiceInterface;
+use Domain\Organization\DTOs\AddMemberDTO;
+use Domain\Organization\DTOs\UpdateMemberRoleDTO;
+use Domain\Organization\Exceptions\MemberAlreadyExistsException;
+use Domain\Organization\Exceptions\CannotModifyOwnerException;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\User;
 
 class MemberController extends Controller
 {
+    public function __construct(
+        private MemberServiceInterface $memberService
+    ) {}
+
     /**
      * Display members of an organization.
      */
@@ -17,11 +26,10 @@ class MemberController extends Controller
     {
         $this->authorize('view', $organization);
 
-        $members = $organization->members()
-            ->with('user')
-            ->get();
+        $members = $this->memberService->getMembers($organization);
+        $organization->load('owner');
 
-        return Inertia::render('Organizations/Members', [
+        return Inertia::render('Organization/Members', [
             'organization' => $organization,
             'members' => $members,
         ]);
@@ -32,26 +40,42 @@ class MemberController extends Controller
      */
     public function store(Request $request, Organization $organization)
     {
-        $this->authorize('update', $organization);
+        $this->authorize('manageMembers', $organization);
 
         $validated = $request->validate([
             'email' => 'required|email|exists:users,email',
             'role' => 'required|in:admin,manager,member',
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        try {
+            $dto = AddMemberDTO::fromArray($validated);
+            $this->memberService->addMember($organization, $dto);
 
-        // Check if user is already a member
-        if ($organization->members()->where('user_id', $user->id)->exists()) {
-            return back()->with('error', 'User is already a member of this organization.');
+            return back()->with('success', 'Member added successfully.');
+        } catch (MemberAlreadyExistsException $e) {
+            return back()->with('error', $e->getMessage());
         }
+    }
 
-        $organization->members()->create([
-            'user_id' => $user->id,
-            'role' => $validated['role'],
+    /**
+     * Update a member's role.
+     */
+    public function update(Request $request, Organization $organization, User $user)
+    {
+        $this->authorize('manageMembers', $organization);
+
+        $validated = $request->validate([
+            'role' => 'required|in:admin,manager,member',
         ]);
 
-        return back()->with('success', 'Member added successfully.');
+        try {
+            $dto = UpdateMemberRoleDTO::fromArray($validated);
+            $this->memberService->updateRole($organization, $user, $dto);
+
+            return back()->with('success', 'Member role updated successfully.');
+        } catch (CannotModifyOwnerException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -59,10 +83,14 @@ class MemberController extends Controller
      */
     public function destroy(Organization $organization, User $user)
     {
-        $this->authorize('update', $organization);
+        $this->authorize('manageMembers', $organization);
 
-        $organization->members()->where('user_id', $user->id)->delete();
+        try {
+            $this->memberService->removeMember($organization, $user);
 
-        return back()->with('success', 'Member removed successfully.');
+            return back()->with('success', 'Member removed successfully.');
+        } catch (CannotModifyOwnerException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

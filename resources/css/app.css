@@ -40,7 +40,7 @@
   }
 
   .input {
-    @apply w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500;
+    @apply py-2.5 px-2.5 w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500;
   }
 
   .label {

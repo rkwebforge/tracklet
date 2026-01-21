@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import AppLayout from '@layouts/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import TaskModal from '@/Components/Task/TaskModal';
+import { ChevronLeft, CheckSquare, Bug, Target, BookOpen } from 'lucide-react';
 
-export default function ProjectShow({ project, board, users = [] }) {
+export default function ProjectShow({ project, board, users = [], can = {} }) {
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
+    
     const getPriorityColor = (priority) => {
         const colors = {
             low: 'bg-gray-100 text-gray-800',
@@ -18,12 +20,18 @@ export default function ProjectShow({ project, board, users = [] }) {
 
     const getTypeIcon = (type) => {
         const icons = {
-            story: '📖',
-            task: '✓',
-            bug: '🐛',
-            epic: '🎯',
+            story: BookOpen,
+            task: CheckSquare,
+            bug: Bug,
+            epic: Target,
         };
-        return icons[type] || '✓';
+        return icons[type] || CheckSquare;
+    };
+
+    const handleDeleteProject = () => {
+        if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+            router.delete(`/projects/${project.id}`);
+        }
     };
 
     return (
@@ -35,9 +43,7 @@ export default function ProjectShow({ project, board, users = [] }) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link href="/projects" className="text-gray-500 hover:text-gray-700">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
+                            <ChevronLeft className="w-6 h-6" />
                         </Link>
                         <div>
                             <div className="flex items-center gap-2">
@@ -51,15 +57,38 @@ export default function ProjectShow({ project, board, users = [] }) {
                             )}
                         </div>
                     </div>
-                    <button 
-                        onClick={() => {
-                            setSelectedTask(null);
-                            setIsTaskModalOpen(true);
-                        }}
-                        className="btn-primary"
-                    >
-                        Create Task
-                    </button>
+                    
+                    <div className="flex items-center gap-3">
+                        {can.update && (
+                            <Link 
+                                href={`/projects/${project.id}/edit`}
+                                className="btn-secondary"
+                            >
+                                Edit Project
+                            </Link>
+                        )}
+                        
+                        {can.createTask && (
+                            <button 
+                                onClick={() => {
+                                    setSelectedTask(null);
+                                    setIsTaskModalOpen(true);
+                                }}
+                                className="btn-primary"
+                            >
+                                Create Task
+                            </button>
+                        )}
+
+                        {can.delete && (
+                            <button 
+                                onClick={handleDeleteProject}
+                                className="btn-danger"
+                            >
+                                Delete
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Kanban Board */}
@@ -138,27 +167,31 @@ export default function ProjectShow({ project, board, users = [] }) {
                                 </div>
 
                                 {/* Add Task Button */}
-                                <button 
-                                    onClick={() => {
-                                        setSelectedTask(null);
-                                        setIsTaskModalOpen(true);
-                                    }}
-                                    className="w-full mt-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-                                >
-                                    + Add task
-                                </button>
+                                {can.createTask && (
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedTask(null);
+                                            setIsTaskModalOpen(true);
+                                        }}
+                                        className="w-full mt-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                                    >
+                                        + Add task
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <TaskModal
-                    isOpen={isTaskModalOpen}
-                    onClose={() => setIsTaskModalOpen(false)}
-                    project={project}
-                    board={board}
-                    task={selectedTask}
-                />
+                {can.createTask && (
+                    <TaskModal
+                        isOpen={isTaskModalOpen}
+                        onClose={() => setIsTaskModalOpen(false)}
+                        project={project}
+                        board={board}
+                        task={selectedTask}
+                    />
+                )}
             </div>
         </AppLayout>
     );
