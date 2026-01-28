@@ -18,33 +18,22 @@ use Illuminate\Support\Facades\DB;
 class InvitationService implements InvitationServiceInterface
 {
     /**
-     * Create a new invitation.
+     * Create a new invitation link.
      */
     public function create(Organization $organization, CreateInvitationDTO $dto, User $inviter): InvitationResultDTO
     {
-        // Check if user is already a member
-        $existingMember = OrganizationMember::where('organization_id', $organization->id)
-            ->whereHas('user', function ($query) use ($dto) {
-                $query->where('email', $dto->email);
-            })
-            ->exists();
-
-        if ($existingMember) {
-            throw new MemberAlreadyExistsException('User is already a member of this organization.');
-        }
-
-        // Check if there's already a pending invitation
-        if ($this->hasPendingInvitation($organization, $dto->email)) {
-            throw new InvitationAlreadyExistsException('An invitation has already been sent to this email.');
-        }
+        $expiresAt = $dto->expiresInDays 
+            ? now()->addDays($dto->expiresInDays) 
+            : null;
 
         $invitation = OrganizationInvitation::create([
             'organization_id' => $organization->id,
             'invited_by' => $inviter->id,
-            'email' => $dto->email,
             'token' => OrganizationInvitation::generateToken(),
             'role' => $dto->role,
-            'expires_at' => now()->addDays(7),
+            'max_uses' => $dto->maxUses,
+            'uses_count' => 0,
+            'expires_at' => $expiresAt,
         ]);
 
         $invitationUrl = url('/register?invite=' . $invitation->token);
@@ -53,18 +42,27 @@ class InvitationService implements InvitationServiceInterface
     }
 
     /**
-     * Accept an invitation.
+     * Accept an invitation (for newly registered users).
      */
     public function accept(string $token, User $user): Organization
     {
         $invitation = $this->getByToken($token);
 
-        if (!$invitation || $invitation->email !== $user->email) {
+        if (!$invitation) {
             throw new InvalidInvitationException('Invalid invitation.');
         }
 
         if (!$this->isValidInvitation($invitation)) {
             throw new InvalidInvitationException('This invitation is no longer valid.');
+        }
+
+        // Check if user is already a member
+        $existingMember = OrganizationMember::where('organization_id', $invitation->organization_id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($existingMember) {
+            throw new InvalidInvitationException('You are already a member of this organization.');
         }
 
         return DB::transaction(function () use ($invitation, $user) {
@@ -75,8 +73,8 @@ class InvitationService implements InvitationServiceInterface
                 'role' => $invitation->role,
             ]);
 
-            // Mark invitation as accepted
-            $invitation->markAsAccepted($user);
+            // Increment usage count
+            $invitation->increment('uses_count');
 
             return $invitation->organization;
         });
@@ -93,16 +91,30 @@ class InvitationService implements InvitationServiceInterface
     }
 
     /**
-     * Get pending invitations for an organization.
+     * Get active invitations for an organization.
      */
-    public function getPendingInvitations(Organization $organization): Collection
+    public function getActiveInvitations(Organization $organization): Collection
     {
         return OrganizationInvitation::with('inviter')
             ->where('organization_id', $organization->id)
-            ->whereNull('accepted_at')
-            ->where('expires_at', '>', now())
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('max_uses')
+                    ->orWhereRaw('uses_count < max_uses');
+            })
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    /**
+     * Get pending invitations for an organization (deprecated - use getActiveInvitations).
+     */
+    public function getPendingInvitations(Organization $organization): Collection
+    {
+        return $this->getActiveInvitations($organization);
     }
 
     /**
@@ -118,18 +130,14 @@ class InvitationService implements InvitationServiceInterface
      */
     public function isValidInvitation(OrganizationInvitation $invitation): bool
     {
-        return !$invitation->isExpired() && !$invitation->isAccepted();
+        return !$invitation->isExpired() && !$invitation->isMaxUsesReached();
     }
 
     /**
-     * Check if email already has pending invitation.
+     * Check if email already has pending invitation (deprecated for link-based system).
      */
     public function hasPendingInvitation(Organization $organization, string $email): bool
     {
-        return OrganizationInvitation::where('organization_id', $organization->id)
-            ->where('email', $email)
-            ->whereNull('accepted_at')
-            ->where('expires_at', '>', now())
-            ->exists();
+        return false; // No longer applicable for link-based invitations
     }
 }

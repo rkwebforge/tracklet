@@ -2,6 +2,7 @@ import { Link, router } from "@inertiajs/react";
 import AuthLayout from "@layouts/AuthLayout";
 import { useForm, Controller } from "react-hook-form";
 import { useState } from "react";
+import CustomTextInput from "@/Components/UI/custom-text-input";
 
 export default function ForgotPassword({ status }) {
   const [processing, setProcessing] = useState(false);
@@ -47,36 +48,26 @@ export default function ForgotPassword({ status }) {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label htmlFor="email" className="label">
-            Email address
-          </label>
-          <Controller
-            name="email"
-            control={control}
-            rules={{
-              required: "Email is required",
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Invalid email address",
-              },
-            }}
-            render={({ field }) => (
-              <input
-                {...field}
-                id="email"
-                type="email"
-                className="input"
-                autoFocus
-              />
-            )}
-          />
-          {(errors.email || serverErrors.email) && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.email?.message || serverErrors.email}
-            </p>
+        <Controller
+          name="email"
+          control={control}
+          rules={{
+            required: "Email is required",
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: "Invalid email address",
+            },
+          }}
+          render={({ field }) => (
+            <CustomTextInput
+              {...field}
+              label="Email address"
+              inputId="email"
+              placeholder="Enter your email"
+              errorMessage={errors.email?.message || serverErrors.email}
+            />
           )}
-        </div>
+        />
 
         <button
           type="submit"

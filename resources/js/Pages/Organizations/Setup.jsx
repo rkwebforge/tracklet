@@ -2,6 +2,8 @@ import { router } from "@inertiajs/react";
 import AuthLayout from "@layouts/AuthLayout";
 import { useForm, Controller } from "react-hook-form";
 import { useState } from "react";
+import CustomTextInput from "@/Components/UI/custom-text-input";
+import CustomTextAreaAutoResize from "@/Components/UI/textarea-resizable";
 
 export default function Setup() {
   const [processing, setProcessing] = useState(false);
@@ -76,9 +78,6 @@ export default function Setup() {
           )}
 
           <div>
-            <label htmlFor="name" className="label">
-              Organization Name *
-            </label>
             <Controller
               name="name"
               control={control}
@@ -90,49 +89,37 @@ export default function Setup() {
                 },
               }}
               render={({ field }) => (
-                <input
+                <CustomTextInput
                   {...field}
-                  id="name"
-                  type="text"
-                  className="input"
+                  label="Organization Name *"
+                  inputId="name"
                   placeholder="e.g., Acme Corporation"
-                  autoFocus
+                  errorMessage={errors.name?.message || serverErrors.name}
                 />
               )}
             />
-            {(errors.name || serverErrors.name) && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.name?.message || serverErrors.name}
-              </p>
-            )}
             <p className="mt-1 text-sm text-gray-500">
               This will be the name of your workspace
             </p>
           </div>
 
-          <div>
-            <label htmlFor="description" className="label">
-              Description (Optional)
-            </label>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  id="description"
-                  className="input"
-                  placeholder="What does your organization do?"
-                  rows={4}
-                />
-              )}
-            />
-            {(errors.description || serverErrors.description) && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.description?.message || serverErrors.description}
-              </p>
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <CustomTextAreaAutoResize
+                {...field}
+                label="Description (Optional)"
+                inputId="description"
+                placeholder="What does your organization do?"
+                minRows={4}
+                maxRows={8}
+                errorMessage={
+                  errors.description?.message || serverErrors.description
+                }
+              />
             )}
-          </div>
+          />
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="text-sm font-semibold text-blue-900 mb-2">

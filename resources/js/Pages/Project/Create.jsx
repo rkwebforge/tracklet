@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
 import Button from "@/Components/UI/Button";
-import Input from "@/Components/UI/Input";
 import { useForm, Controller } from "react-hook-form";
+import CustomSelectInput from "@/Components/UI/custom-select";
+import CustomTextInput from "@/Components/UI/custom-text-input";
+import CustomTextAreaAutoResize from "@/Components/UI/textarea-resizable";
 
 export default function Create({ organizations }) {
   const [processing, setProcessing] = useState(false);
@@ -54,76 +56,60 @@ export default function Create({ organizations }) {
           </h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label
-                htmlFor="organization_id"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Organization *
-              </label>
-              <Controller
-                name="organization_id"
-                control={control}
-                rules={{ required: "Organization is required" }}
-                render={({ field }) => (
-                  <select
-                    {...field}
-                    id="organization_id"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  >
-                    <option value="">Select an organization</option>
-                    {organizations.map((org) => (
-                      <option key={org.id} value={org.id}>
-                        {org.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              />
-              {(errors.organization_id || serverErrors.organization_id) && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.organization_id?.message ||
-                    serverErrors.organization_id}
-                </p>
+            <Controller
+              name="organization_id"
+              control={control}
+              rules={{ required: "Organization is required" }}
+              render={({ field }) => (
+                <CustomSelectInput
+                  label="Organization *"
+                  options={organizations.map((org) => ({
+                    id: org.id,
+                    name: org.name,
+                  }))}
+                  value={
+                    organizations.find((org) => org.id === field.value)
+                      ? {
+                          id: field.value,
+                          name: organizations.find(
+                            (org) => org.id === field.value,
+                          ).name,
+                        }
+                      : null
+                  }
+                  onChange={(option) => field.onChange(option.id)}
+                  placeholder="Select an organization"
+                  errorMessage={
+                    errors.organization_id?.message ||
+                    serverErrors.organization_id
+                  }
+                  translateOptions={false}
+                />
               )}
-            </div>
+            />
+
+            <Controller
+              name="name"
+              control={control}
+              rules={{
+                required: "Project name is required",
+                minLength: {
+                  value: 2,
+                  message: "Project name must be at least 2 characters",
+                },
+              }}
+              render={({ field }) => (
+                <CustomTextInput
+                  {...field}
+                  label="Project Name *"
+                  inputId="name"
+                  placeholder="e.g., Website Redesign"
+                  errorMessage={errors.name?.message || serverErrors.name}
+                />
+              )}
+            />
 
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Project Name *
-              </label>
-              <Controller
-                name="name"
-                control={control}
-                rules={{
-                  required: "Project name is required",
-                  minLength: {
-                    value: 2,
-                    message: "Project name must be at least 2 characters",
-                  },
-                }}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    id="name"
-                    type="text"
-                    placeholder="e.g., Website Redesign"
-                    error={errors.name?.message || serverErrors.name}
-                  />
-                )}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="key"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Project Key *
-              </label>
               <Controller
                 name="key"
                 control={control}
@@ -144,14 +130,13 @@ export default function Create({ organizations }) {
                   },
                 }}
                 render={({ field: { onChange, ...field } }) => (
-                  <Input
+                  <CustomTextInput
                     {...field}
                     onChange={(e) => onChange(e.target.value.toUpperCase())}
-                    id="key"
-                    type="text"
+                    label="Project Key *"
+                    inputId="key"
                     placeholder="e.g., WEB"
-                    maxLength={10}
-                    error={errors.key?.message || serverErrors.key}
+                    errorMessage={errors.key?.message || serverErrors.key}
                   />
                 )}
               />
@@ -160,32 +145,23 @@ export default function Create({ organizations }) {
               </p>
             </div>
 
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Description
-              </label>
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <textarea
-                    {...field}
-                    id="description"
-                    rows={4}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    placeholder="Brief description of the project..."
-                  />
-                )}
-              />
-              {(errors.description || serverErrors.description) && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.description?.message || serverErrors.description}
-                </p>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <CustomTextAreaAutoResize
+                  {...field}
+                  label="Description"
+                  inputId="description"
+                  placeholder="Brief description of the project..."
+                  minRows={4}
+                  maxRows={8}
+                  errorMessage={
+                    errors.description?.message || serverErrors.description
+                  }
+                />
               )}
-            </div>
+            />
 
             <div className="flex justify-end gap-3">
               <Link href={route("projects.index")}>

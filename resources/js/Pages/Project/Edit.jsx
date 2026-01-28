@@ -3,6 +3,9 @@ import AppLayout from "@layouts/AppLayout";
 import { Head } from "@inertiajs/react";
 import { useForm, Controller } from "react-hook-form";
 import { useState } from "react";
+import CustomTextInput from "@/Components/UI/custom-text-input";
+import CustomTextAreaAutoResize from "@/Components/UI/textarea-resizable";
+import CustomSelectInput from "@/Components/UI/custom-select";
 
 export default function EditProject({ project }) {
   const [processing, setProcessing] = useState(false);
@@ -52,82 +55,67 @@ export default function EditProject({ project }) {
           </h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="label">
-                Project Name
-              </label>
-              <Controller
-                name="name"
-                control={control}
-                rules={{
-                  required: "Project name is required",
-                  minLength: {
-                    value: 2,
-                    message: "Project name must be at least 2 characters",
-                  },
-                }}
-                render={({ field }) => (
-                  <input
-                    {...field}
-                    id="name"
-                    type="text"
-                    className="input"
-                    autoFocus
-                  />
-                )}
-              />
-              {(errors.name || serverErrors.name) && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.name?.message || serverErrors.name}
-                </p>
+            <Controller
+              name="name"
+              control={control}
+              rules={{
+                required: "Project name is required",
+                minLength: {
+                  value: 2,
+                  message: "Project name must be at least 2 characters",
+                },
+              }}
+              render={({ field }) => (
+                <CustomTextInput
+                  {...field}
+                  label="Project Name"
+                  inputId="name"
+                  placeholder="Enter project name"
+                  errorMessage={errors.name?.message || serverErrors.name}
+                />
               )}
-            </div>
+            />
 
-            <div>
-              <label htmlFor="description" className="label">
-                Description (Optional)
-              </label>
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <textarea
-                    {...field}
-                    id="description"
-                    className="input"
-                    rows="4"
-                    placeholder="Describe your project..."
-                  />
-                )}
-              />
-              {(errors.description || serverErrors.description) && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.description?.message || serverErrors.description}
-                </p>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <CustomTextAreaAutoResize
+                  {...field}
+                  label="Description (Optional)"
+                  inputId="description"
+                  placeholder="Describe your project..."
+                  minRows={4}
+                  maxRows={8}
+                  errorMessage={
+                    errors.description?.message || serverErrors.description
+                  }
+                />
               )}
-            </div>
+            />
 
-            <div>
-              <label htmlFor="status" className="label">
-                Status
-              </label>
-              <Controller
-                name="status"
-                control={control}
-                rules={{ required: "Status is required" }}
-                render={({ field }) => (
-                  <select {...field} id="status" className="input">
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                )}
-              />
-              {(errors.status || serverErrors.status) && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.status?.message || serverErrors.status}
-                </p>
+            <Controller
+              name="status"
+              control={control}
+              rules={{ required: "Status is required" }}
+              render={({ field }) => (
+                <CustomSelectInput
+                  label="Status"
+                  options={[
+                    { id: "active", name: "Active" },
+                    { id: "archived", name: "Archived" },
+                  ]}
+                  value={{
+                    id: field.value,
+                    name: field.value === "active" ? "Active" : "Archived",
+                  }}
+                  onChange={(option) => field.onChange(option.id)}
+                  placeholder="Select status"
+                  errorMessage={errors.status?.message || serverErrors.status}
+                  translateOptions={false}
+                />
               )}
-            </div>
+            />
 
             <div className="flex items-center justify-end gap-3 pt-4 border-t">
               <Link href={`/projects/${project.id}`} className="btn-secondary">
