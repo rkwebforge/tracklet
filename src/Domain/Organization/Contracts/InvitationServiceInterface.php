@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 interface InvitationServiceInterface
 {
     /**
-     * Create a new invitation.
+     * Create a new invitation link.
      */
     public function create(Organization $organization, CreateInvitationDTO $dto, User $inviter): InvitationResultDTO;
 
@@ -27,7 +27,12 @@ interface InvitationServiceInterface
     public function getByToken(string $token): ?OrganizationInvitation;
 
     /**
-     * Get pending invitations for an organization.
+     * Get active invitations for an organization.
+     */
+    public function getActiveInvitations(Organization $organization): Collection;
+
+    /**
+     * Get pending invitations for an organization (deprecated - use getActiveInvitations).
      */
     public function getPendingInvitations(Organization $organization): Collection;
 
@@ -42,7 +47,7 @@ interface InvitationServiceInterface
     public function isValidInvitation(OrganizationInvitation $invitation): bool;
 
     /**
-     * Check if email already has pending invitation.
+     * Check if email already has pending invitation (deprecated).
      */
     public function hasPendingInvitation(Organization $organization, string $email): bool;
 }

@@ -2,6 +2,8 @@ import { Link, router } from "@inertiajs/react";
 import AuthLayout from "@layouts/AuthLayout";
 import { useForm, Controller } from "react-hook-form";
 import { useState } from "react";
+import CustomTextInput from "@/Components/UI/custom-text-input";
+import CustomPasswordInput from "@/Components/UI/custom-password-input";
 
 export default function Login() {
   const [processing, setProcessing] = useState(false);
@@ -38,66 +40,47 @@ export default function Login() {
       </h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label htmlFor="email" className="label">
-            Email address
-          </label>
-          <Controller
-            name="email"
-            control={control}
-            rules={{
-              required: "Email is required",
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Invalid email address",
-              },
-            }}
-            render={({ field }) => (
-              <input
-                {...field}
-                id="email"
-                type="email"
-                className="input"
-                autoFocus
-              />
-            )}
-          />
-          {(errors.email || serverErrors.email) && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.email?.message || serverErrors.email}
-            </p>
+        <Controller
+          name="email"
+          control={control}
+          rules={{
+            required: "Email is required",
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: "Invalid email address",
+            },
+          }}
+          render={({ field }) => (
+            <CustomTextInput
+              {...field}
+              label="Email address"
+              inputId="email"
+              placeholder="Enter your email"
+              errorMessage={errors.email?.message || serverErrors.email}
+            />
           )}
-        </div>
+        />
 
-        <div>
-          <label htmlFor="password" className="label">
-            Password
-          </label>
-          <Controller
-            name="password"
-            control={control}
-            rules={{
-              required: "Password is required",
-              minLength: {
-                value: 6,
-                message: "Password must be at least 6 characters",
-              },
-            }}
-            render={({ field }) => (
-              <input
-                {...field}
-                id="password"
-                type="password"
-                className="input"
-              />
-            )}
-          />
-          {(errors.password || serverErrors.password) && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.password?.message || serverErrors.password}
-            </p>
+        <Controller
+          name="password"
+          control={control}
+          rules={{
+            required: "Password is required",
+            minLength: {
+              value: 6,
+              message: "Password must be at least 6 characters",
+            },
+          }}
+          render={({ field }) => (
+            <CustomPasswordInput
+              {...field}
+              label="Password"
+              inputId="password"
+              placeholder="Enter your password"
+              errorMessage={errors.password?.message || serverErrors.password}
+            />
           )}
-        </div>
+        />
 
         <div className="flex items-center justify-between">
           <div className="flex items-center">

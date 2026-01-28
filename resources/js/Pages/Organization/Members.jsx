@@ -12,6 +12,7 @@ import {
   Crown,
   ChevronLeft,
 } from "lucide-react";
+import CustomSelectInput from "@/Components/UI/custom-select";
 
 const RoleBadge = memo(function RoleBadge({ role }) {
   const roleStyles = {
@@ -108,15 +109,23 @@ const MemberRow = memo(function MemberRow({
 
       <div className="flex items-center gap-3">
         {canManage && !isOrgOwner && !isOwner ? (
-          <select
-            value={selectedRole}
-            onChange={(e) => handleRoleChange(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="member">Member</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Admin</option>
-          </select>
+          <div className="w-40">
+            <CustomSelectInput
+              options={[
+                { id: "member", name: "Member" },
+                { id: "manager", name: "Manager" },
+                { id: "admin", name: "Admin" },
+              ]}
+              value={{
+                id: selectedRole,
+                name:
+                  selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1),
+              }}
+              onChange={(option) => handleRoleChange(option.id)}
+              placeholder="Select role"
+              translateOptions={false}
+            />
+          </div>
         ) : (
           <RoleBadge role={member.role} />
         )}

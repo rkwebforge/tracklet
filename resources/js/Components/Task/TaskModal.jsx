@@ -2,8 +2,10 @@ import { Fragment, useEffect, useState, memo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { router } from "@inertiajs/react";
 import Button from "@/Components/UI/Button";
-import Input from "@/Components/UI/Input";
 import { useForm, Controller } from "react-hook-form";
+import CustomTextInput from "@/Components/UI/custom-text-input";
+import CustomTextAreaAutoResize from "@/Components/UI/textarea-resizable";
+import CustomSelectInput from "@/Components/UI/custom-select";
 
 const TaskModal = memo(function TaskModal({
   isOpen,
@@ -152,197 +154,177 @@ const TaskModal = memo(function TaskModal({
                 )}
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="title"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Title *
-                    </label>
+                  <Controller
+                    name="title"
+                    control={control}
+                    rules={{
+                      required: "Title is required",
+                      minLength: {
+                        value: 3,
+                        message: "Title must be at least 3 characters",
+                      },
+                    }}
+                    render={({ field }) => (
+                      <CustomTextInput
+                        {...field}
+                        label="Title *"
+                        inputId="title"
+                        placeholder="Enter task title"
+                        errorMessage={
+                          errors.title?.message || serverErrors.title
+                        }
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextAreaAutoResize
+                        {...field}
+                        label="Description"
+                        inputId="description"
+                        placeholder="Describe the task..."
+                        minRows={4}
+                        maxRows={8}
+                        errorMessage={
+                          errors.description?.message ||
+                          serverErrors.description
+                        }
+                      />
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
                     <Controller
-                      name="title"
+                      name="type"
                       control={control}
-                      rules={{
-                        required: "Title is required",
-                        minLength: {
-                          value: 3,
-                          message: "Title must be at least 3 characters",
-                        },
+                      rules={{ required: "Type is required" }}
+                      render={({ field }) => (
+                        <CustomSelectInput
+                          label="Type *"
+                          options={[
+                            { id: "story", name: "Story" },
+                            { id: "task", name: "Task" },
+                            { id: "bug", name: "Bug" },
+                            { id: "epic", name: "Epic" },
+                          ]}
+                          value={{
+                            id: field.value,
+                            name:
+                              field.value.charAt(0).toUpperCase() +
+                              field.value.slice(1),
+                          }}
+                          onChange={(option) => field.onChange(option.id)}
+                          placeholder="Select type"
+                          errorMessage={
+                            errors.type?.message || serverErrors.type
+                          }
+                          translateOptions={false}
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      name="priority"
+                      control={control}
+                      rules={{ required: "Priority is required" }}
+                      render={({ field }) => (
+                        <CustomSelectInput
+                          label="Priority *"
+                          options={[
+                            { id: "low", name: "Low" },
+                            { id: "medium", name: "Medium" },
+                            { id: "high", name: "High" },
+                            { id: "critical", name: "Critical" },
+                          ]}
+                          value={{
+                            id: field.value,
+                            name:
+                              field.value.charAt(0).toUpperCase() +
+                              field.value.slice(1),
+                          }}
+                          onChange={(option) => field.onChange(option.id)}
+                          placeholder="Select priority"
+                          errorMessage={
+                            errors.priority?.message || serverErrors.priority
+                          }
+                          translateOptions={false}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Controller
+                      name="status"
+                      control={control}
+                      rules={{ required: "Status is required" }}
+                      render={({ field }) => {
+                        const statusLabels = {
+                          backlog: "Backlog",
+                          todo: "To Do",
+                          in_progress: "In Progress",
+                          in_review: "In Review",
+                          done: "Done",
+                        };
+                        return (
+                          <CustomSelectInput
+                            label="Status *"
+                            options={[
+                              { id: "backlog", name: "Backlog" },
+                              { id: "todo", name: "To Do" },
+                              { id: "in_progress", name: "In Progress" },
+                              { id: "in_review", name: "In Review" },
+                              { id: "done", name: "Done" },
+                            ]}
+                            value={{
+                              id: field.value,
+                              name: statusLabels[field.value] || field.value,
+                            }}
+                            onChange={(option) => field.onChange(option.id)}
+                            placeholder="Select status"
+                            errorMessage={
+                              errors.status?.message || serverErrors.status
+                            }
+                            translateOptions={false}
+                          />
+                        );
                       }}
-                      render={({ field }) => (
-                        <input
-                          {...field}
-                          id="title"
-                          type="text"
-                          placeholder="Enter task title"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        />
-                      )}
                     />
-                    {(errors.title || serverErrors.title) && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.title?.message || serverErrors.title}
-                      </p>
-                    )}
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="description"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Description
-                    </label>
                     <Controller
-                      name="description"
+                      name="assignee_id"
                       control={control}
-                      render={({ field }) => (
-                        <textarea
-                          {...field}
-                          id="description"
-                          rows={4}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                          placeholder="Describe the task..."
-                        />
-                      )}
+                      render={({ field }) => {
+                        const assigneeOptions = [
+                          { id: "", name: "Unassigned" },
+                          ...users.map((user) => ({
+                            id: user.id,
+                            name: user.name,
+                          })),
+                        ];
+                        const selectedUser =
+                          assigneeOptions.find(
+                            (opt) => opt.id === field.value,
+                          ) || assigneeOptions[0];
+                        return (
+                          <CustomSelectInput
+                            label="Assignee"
+                            options={assigneeOptions}
+                            value={selectedUser}
+                            onChange={(option) => field.onChange(option.id)}
+                            placeholder="Select assignee"
+                            errorMessage={
+                              errors.assignee_id?.message ||
+                              serverErrors.assignee_id
+                            }
+                            translateOptions={false}
+                          />
+                        );
+                      }}
                     />
-                    {(errors.description || serverErrors.description) && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.description?.message ||
-                          serverErrors.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="type"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Type *
-                      </label>
-                      <Controller
-                        name="type"
-                        control={control}
-                        rules={{ required: "Type is required" }}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            id="type"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                          >
-                            <option value="story">Story</option>
-                            <option value="task">Task</option>
-                            <option value="bug">Bug</option>
-                            <option value="epic">Epic</option>
-                          </select>
-                        )}
-                      />
-                      {(errors.type || serverErrors.type) && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.type?.message || serverErrors.type}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="priority"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Priority *
-                      </label>
-                      <Controller
-                        name="priority"
-                        control={control}
-                        rules={{ required: "Priority is required" }}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            id="priority"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                          >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="critical">Critical</option>
-                          </select>
-                        )}
-                      />
-                      {(errors.priority || serverErrors.priority) && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.priority?.message || serverErrors.priority}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="status"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Status *
-                      </label>
-                      <Controller
-                        name="status"
-                        control={control}
-                        rules={{ required: "Status is required" }}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            id="status"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                          >
-                            <option value="backlog">Backlog</option>
-                            <option value="todo">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="in_review">In Review</option>
-                            <option value="done">Done</option>
-                          </select>
-                        )}
-                      />
-                      {(errors.status || serverErrors.status) && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.status?.message || serverErrors.status}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="assignee_id"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Assignee
-                      </label>
-                      <Controller
-                        name="assignee_id"
-                        control={control}
-                        render={({ field }) => (
-                          <select
-                            {...field}
-                            id="assignee_id"
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                          >
-                            <option value="">Unassigned</option>
-                            {users.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                {user.name}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      />
-                      {(errors.assignee_id || serverErrors.assignee_id) && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {errors.assignee_id?.message ||
-                            serverErrors.assignee_id}
-                        </p>
-                      )}
-                    </div>
                   </div>
 
                   <div className="flex justify-between items-center mt-6">

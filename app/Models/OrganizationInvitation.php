@@ -11,17 +11,17 @@ class OrganizationInvitation extends Model
     protected $fillable = [
         'organization_id',
         'invited_by',
-        'email',
         'token',
         'role',
+        'max_uses',
+        'uses_count',
         'expires_at',
-        'accepted_at',
-        'accepted_by',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
-        'accepted_at' => 'datetime',
+        'max_uses' => 'integer',
+        'uses_count' => 'integer',
     ];
 
     /**
@@ -37,34 +37,23 @@ class OrganizationInvitation extends Model
      */
     public function isExpired(): bool
     {
-        return $this->expires_at->isPast();
+        return $this->expires_at && $this->expires_at->isPast();
     }
 
     /**
-     * Check if invitation is accepted
+     * Check if invitation has reached max uses
      */
-    public function isAccepted(): bool
+    public function isMaxUsesReached(): bool
     {
-        return !is_null($this->accepted_at);
+        return $this->max_uses && $this->uses_count >= $this->max_uses;
     }
 
     /**
-     * Check if invitation is valid (not expired and not accepted)
+     * Check if invitation is valid (not expired and not max uses reached)
      */
     public function isValid(): bool
     {
-        return !$this->isExpired() && !$this->isAccepted();
-    }
-
-    /**
-     * Mark invitation as accepted
-     */
-    public function markAsAccepted(User $user): void
-    {
-        $this->update([
-            'accepted_at' => now(),
-            'accepted_by' => $user->id,
-        ]);
+        return !$this->isExpired() && !$this->isMaxUsesReached();
     }
 
     /**
@@ -81,13 +70,5 @@ class OrganizationInvitation extends Model
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');
-    }
-
-    /**
-     * Get the user who accepted the invitation
-     */
-    public function acceptedByUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'accepted_by');
     }
 }
